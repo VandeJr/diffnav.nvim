@@ -24,6 +24,7 @@ O `diffnav.nvim` é um plugin desenhado para trazer a exata experiência tátil 
    - Janelas flutuantes que listam arquivos por status de staging (`:DiffnavStatus`) com atalhos de `Enter` para adicionar/remover do stage.
    - Painel flutuante dedicado para listar arquivos que possuem conflitos de merge pendentes (`:DiffnavConflicts`).
    - **Painel Completo (Lado a Lado)**: Comando `:DiffnavPanel` abre uma nova aba dividida em três seções: uma sidebar listando todos os arquivos modificados e dois buffers centrais (lado a lado) mostrando a diferença exata entre a versão do HEAD e a Working Tree.
+   - **Telescope-like Float Panel**: Comando `:DiffnavFloat` abre um seletor flutuante de arquivos alterados. Ao escolher um arquivo, ele o abre em uma janela flutuante maximizada, mesclando o arquivo final com diffs inline. Permite atuar linha a linha usando os atalhos locais (`s` para stage, `u` para unstage).
 
 ---
 
