@@ -29,3 +29,12 @@ end, {})
 vim.api.nvim_create_user_command("DiffnavMergeBoth", function()
     require("diffnav.merge").resolve_both()
 end, {})
+
+-- Comandos de Status e Diffview global
+vim.api.nvim_create_user_command("DiffnavStatus", function()
+    require("diffnav.status").show_status()
+end, {})
+
+vim.api.nvim_create_user_command("DiffnavConflicts", function()
+    require("diffnav.conflicts").show_conflicts()
+end, {})

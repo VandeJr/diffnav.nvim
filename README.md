@@ -20,6 +20,10 @@ O `diffnav.nvim` é um plugin desenhado para trazer a exata experiência tátil 
    - Injetar botões virtuais (Virtual Lines) acima do bloco de conflito com ações rápidas: `[ Aceitar Atual ] | [ Aceitar Recebido ] | [ Aceitar Ambos ]`.
    - Ao acionar a escolha, limpar automaticamente as marcações do Git e o código descartado.
 
+4. **Visão Geral e Painéis de Controle (TUI):**
+   - Janelas flutuantes que listam arquivos por status de staging (`:DiffnavStatus`) com atalhos de `Enter` para adicionar/remover do stage.
+   - Painel flutuante dedicado para listar arquivos que possuem conflitos de merge pendentes (`:DiffnavConflicts`).
+
 ---
 
 ## 🏗️ Engenharia e Arquitetura Técnica
