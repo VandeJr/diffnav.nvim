@@ -5,12 +5,8 @@ local render = require("diffnav.render")
 local stage = require("diffnav.stage")
 
 local state = {
-    files = {},
-    filtered_files = {},
-    picker_buf = nil,
-    picker_win = nil,
-    diff_win = nil,
     current_hunks = {},
+    diff_win = nil,
 }
 
 local function fetch_files(callback)
@@ -26,40 +22,6 @@ local function fetch_files(callback)
             table.insert(files, { status = status, filepath = filepath })
         end
         vim.schedule(function() callback(files) end)
-    end)
-end
-
-local function draw_picker()
-    if not state.picker_buf or not vim.api.nvim_buf_is_valid(state.picker_buf) then return end
-    
-    local lines = {
-        " 🔍 SELECIONE O ARQUIVO PARA VER AS DIFERENÇAS ",
-        " [Enter] Abrir | [s] Stage Arquivo | [u] Unstage Arquivo | [/] Buscar",
-        "================================================================",
-        ""
-    }
-    
-    for _, f in ipairs(state.filtered_files) do
-        table.insert(lines, " [" .. f.status .. "] " .. f.filepath)
-    end
-
-    vim.api.nvim_set_option_value("modifiable", true, { buf = state.picker_buf })
-    vim.api.nvim_buf_set_lines(state.picker_buf, 0, -1, false, lines)
-    vim.api.nvim_set_option_value("modifiable", false, { buf = state.picker_buf })
-end
-
-local function apply_file_action(action, filepath)
-    local cmd = action == "stage" and { "git", "add", filepath } or { "git", "restore", "--staged", filepath }
-    vim.system(cmd, { text = true }, function(obj)
-        vim.schedule(function()
-            if obj.code == 0 then
-                fetch_files(function(files)
-                    state.files = files
-                    state.filtered_files = files -- Reseta o filtro ao agir para manter a consistência
-                    draw_picker()
-                end)
-            end
-        end)
     end)
 end
 
@@ -98,13 +60,12 @@ function M.open_diff_view(filepath)
     local function close_view()
         render.clear(bufnr)
         vim.api.nvim_win_close(state.diff_win, true)
-        M.open_picker()
+        M.open_picker() -- Reabre o Telescope picker
     end
 
     vim.keymap.set('n', 'q', close_view, opts)
     vim.keymap.set('n', '<Esc>', close_view, opts)
 
-    -- Hunk actions
     vim.keymap.set('n', 's', function()
         stage.stage_hunk_at_cursor()
         vim.defer_fn(refresh_diff, 150)
@@ -114,7 +75,6 @@ function M.open_diff_view(filepath)
         vim.defer_fn(refresh_diff, 150)
     end, opts)
 
-    -- File actions
     vim.keymap.set('n', 'S', function()
         vim.system({ "git", "add", filepath }, { text = true }, function()
             vim.schedule(refresh_diff)
@@ -126,7 +86,6 @@ function M.open_diff_view(filepath)
         end)
     end, opts)
 
-    -- Navigate chunks
     vim.keymap.set('n', ']c', function()
         if not state.current_hunks then return end
         local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
@@ -152,7 +111,6 @@ function M.open_diff_view(filepath)
         end
     end, opts)
 
-    -- View staged version
     vim.keymap.set('n', 'v', function()
         vim.system({ "git", "show", ":" .. filepath }, { text = true }, function(obj)
             vim.schedule(function()
@@ -164,7 +122,6 @@ function M.open_diff_view(filepath)
                 local lines = vim.split(obj.stdout, "\n")
                 local view_buf, view_win = ui.create_float_win(" Versão Staged de " .. filepath .. " ", 0.8, 0.8)
                 
-                -- Copia filetype do buffer original
                 local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
                 vim.api.nvim_set_option_value("filetype", ft, { buf = view_buf })
                 
@@ -177,67 +134,75 @@ function M.open_diff_view(filepath)
 end
 
 function M.open_picker()
+    -- Tenta carregar o Telescope
+    local has_telescope, telescope = pcall(require, "telescope.pickers")
+    if not has_telescope then
+        print("Diffnav: O Telescope não está instalado. Este picker depende dele.")
+        return
+    end
+    local finders = require("telescope.finders")
+    local conf = require("telescope.config").values
+    local actions = require("telescope.actions")
+    local action_state = require("telescope.actions.state")
+
     fetch_files(function(files)
         if #files == 0 then
             print("Diffnav: Não há arquivos alterados.")
             return
         end
-        state.files = files
-        state.filtered_files = files
 
-        if not state.picker_buf or not vim.api.nvim_buf_is_valid(state.picker_buf) then
-            state.picker_buf, state.picker_win = ui.create_float_win(" Arquivos Alterados ", 0.7, 0.6)
-            vim.api.nvim_set_option_value("filetype", "diffnav_picker", { buf = state.picker_buf })
+        local display_items = {}
+        for _, f in ipairs(files) do
+            table.insert(display_items, string.format("[%s] %s", f.status, f.filepath))
         end
 
-        draw_picker()
-        
-        local opts = { buffer = state.picker_buf, silent = true }
-
-        -- Ação: Selecionar arquivo
-        vim.keymap.set('n', '<CR>', function()
-            local cursor = vim.api.nvim_win_get_cursor(0)
-            local idx = cursor[1] - 4 -- 4 linhas de cabeçalho
-            if idx >= 1 and idx <= #state.filtered_files then
-                local filepath = state.filtered_files[idx].filepath
-                vim.api.nvim_win_close(state.picker_win, true)
-                M.open_diff_view(filepath)
-            end
-        end, opts)
-
-        -- Ação: Buscar / Filtrar fuzzy simples
-        vim.keymap.set('n', '/', function()
-            vim.ui.input({ prompt = 'Buscar arquivo (digite parte do nome): ' }, function(input)
-                if not input then return end
-                state.filtered_files = {}
-                for _, f in ipairs(state.files) do
-                    -- Busca case-insensitive simples
-                    if f.filepath:lower():find(input:lower(), 1, true) then
-                        table.insert(state.filtered_files, f)
+        telescope.new({}, {
+            prompt_title = "Diffnav - Arquivos Alterados (Ctrl+S: Stage | Ctrl+U: Unstage)",
+            finder = finders.new_table({
+                results = display_items,
+            }),
+            sorter = conf.generic_sorter({}),
+            previewer = conf.file_previewer({}),
+            attach_mappings = function(prompt_bufnr, map)
+                
+                -- Ação padrão: Enter abre a nossa View de Edição Customizada
+                actions.select_default:replace(function()
+                    local selection = action_state.get_selected_entry()
+                    actions.close(prompt_bufnr)
+                    if selection then
+                        -- Extrai o filepath removendo a tag "[xx] " da frente
+                        local filepath = selection.value:match("%[%s*.-%s*%]%s+(.+)")
+                        if filepath then
+                            M.open_diff_view(filepath)
+                        end
                     end
-                end
-                draw_picker()
-            end)
-        end, opts)
+                end)
 
-        -- Ação: Stage Arquivo Inteiro
-        vim.keymap.set('n', 's', function()
-            local cursor = vim.api.nvim_win_get_cursor(0)
-            local idx = cursor[1] - 4
-            if idx >= 1 and idx <= #state.filtered_files then
-                apply_file_action("stage", state.filtered_files[idx].filepath)
-            end
-        end, opts)
+                -- Ação customizada: Ctrl+S para dar Stage no arquivo inteiro direto do Telescope
+                map('i', '<C-s>', function()
+                    local selection = action_state.get_selected_entry()
+                    if selection then
+                        local filepath = selection.value:match("%[%s*.-%s*%]%s+(.+)")
+                        vim.system({ "git", "add", filepath }, { text = true }, function()
+                            vim.schedule(function() print("Diffnav: " .. filepath .. " adicionado ao stage.") end)
+                        end)
+                    end
+                end)
 
-        -- Ação: Unstage Arquivo Inteiro
-        vim.keymap.set('n', 'u', function()
-            local cursor = vim.api.nvim_win_get_cursor(0)
-            local idx = cursor[1] - 4
-            if idx >= 1 and idx <= #state.filtered_files then
-                apply_file_action("unstage", state.filtered_files[idx].filepath)
-            end
-        end, opts)
+                -- Ação customizada: Ctrl+U para remover Stage (Unstage) direto do Telescope
+                map('i', '<C-u>', function()
+                    local selection = action_state.get_selected_entry()
+                    if selection then
+                        local filepath = selection.value:match("%[%s*.-%s*%]%s+(.+)")
+                        vim.system({ "git", "restore", "--staged", filepath }, { text = true }, function()
+                            vim.schedule(function() print("Diffnav: " .. filepath .. " removido do stage.") end)
+                        end)
+                    end
+                end)
 
+                return true
+            end,
+        }):find()
     end)
 end
 

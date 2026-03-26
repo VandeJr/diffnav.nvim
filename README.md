@@ -23,8 +23,9 @@ O `diffnav.nvim` é um plugin desenhado para trazer a exata experiência tátil 
 4. **Visão Geral e Painéis de Controle (TUI):**
    - Janelas flutuantes que listam arquivos por status de staging (`:DiffnavStatus`) com atalhos de `Enter` para adicionar/remover do stage.
    - Painel flutuante dedicado para listar arquivos que possuem conflitos de merge pendentes (`:DiffnavConflicts`).
-   - **Telescope-like Float Panel**: Comando `:DiffnavFloat` abre um seletor flutuante de arquivos alterados. Ao escolher um arquivo, ele o abre em uma janela flutuante maximizada, mesclando o arquivo final com diffs inline.
-     - No Seletor: use `/` para busca (fuzzy filter), `s` e `u` para dar stage/unstage no arquivo inteiro.
+   - **Telescope-like Float Panel**: Comando `:DiffnavFloat` integra-se nativamente com o **Telescope** para listar arquivos alterados com suporte total a **fuzzy finding**. 
+     - No Telescope: use `Ctrl+s` e `Ctrl+u` para dar stage/unstage no arquivo inteiro.
+     - Pressionando `Enter`, o arquivo é aberto em uma janela flutuante maximizada, mesclando o arquivo final com diffs inline.
      - No Visualizador: use `s` e `u` no bloco atual, `S` e `U` no arquivo inteiro, `]c` e `[c` para navegar entre os chunks, e `v` para visualizar a versão exata que irá para o commit.
 
 ---
