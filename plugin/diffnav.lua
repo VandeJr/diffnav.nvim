@@ -38,3 +38,8 @@ end, {})
 vim.api.nvim_create_user_command("DiffnavConflicts", function()
     require("diffnav.conflicts").show_conflicts()
 end, {})
+
+-- Comando para abrir a interface completa (Sidebar + Diff Lado a Lado)
+vim.api.nvim_create_user_command("DiffnavPanel", function()
+    require("diffnav.panel").open_panel()
+end, {})
