@@ -8,10 +8,22 @@ local default_config = {
 }
 
 M.is_active = false
+local augroup_id = vim.api.nvim_create_augroup("DiffnavGroup", { clear = true })
 
 -- Função de setup para o lazy.nvim
 function M.setup(user_config)
     M.config = vim.tbl_deep_extend("force", default_config, user_config or {})
+    
+    -- Autocmd para atualizar automaticamente as marcações caso o plugin esteja ativo
+    vim.api.nvim_create_autocmd({"BufWritePost", "BufEnter"}, {
+        group = augroup_id,
+        pattern = "*",
+        callback = function()
+            if M.is_active then
+                M.show_diff()
+            end
+        end,
+    })
 end
 
 -- Limpa as marcações do buffer atual
