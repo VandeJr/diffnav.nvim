@@ -39,11 +39,6 @@ vim.api.nvim_create_user_command("DiffnavConflicts", function()
     require("diffnav.conflicts").show_conflicts()
 end, {})
 
--- Comando para abrir a interface completa (Sidebar + Diff Lado a Lado)
-vim.api.nvim_create_user_command("DiffnavPanel", function()
-    require("diffnav.panel").open_panel()
-end, {})
-
 -- Comando para abrir a interface flutuante (Estilo Telescope) com diff inline
 vim.api.nvim_create_user_command("DiffnavFloat", function()
     require("diffnav.float_panel").open_picker()
