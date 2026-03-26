@@ -1,6 +1,7 @@
 local M = {}
 local git = require("diffnav.git")
 local render = require("diffnav.render")
+local merge = require("diffnav.merge")
 
 -- Configurações padrão do plugin
 local default_config = {
@@ -19,9 +20,13 @@ function M.setup(user_config)
         group = augroup_id,
         pattern = "*",
         callback = function()
+            local bufnr = vim.api.nvim_get_current_buf()
             if M.is_active then
                 M.show_diff()
             end
+            
+            -- Sempre tenta detectar e desenhar avisos de conflito de merge (independente do toggle visual de diff)
+            merge.detect_and_draw(bufnr)
         end,
     })
 end
@@ -30,6 +35,7 @@ end
 function M.clear_diff()
     local bufnr = vim.api.nvim_get_current_buf()
     render.clear(bufnr)
+    merge.clear(bufnr)
 end
 
 -- Extrai do git e renderiza as marcas
