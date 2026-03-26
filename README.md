@@ -45,4 +45,4 @@ O Neovim possui a API `nvim_buf_set_extmark`. Esta é a espinha dorsal do projet
 - [x] Construir o módulo de parser assíncrono do `git diff`.
 - [x] Renderizar linhas adicionadas e deletadas usando namespace de extmarks.
 - [x] Criar a interface tátil para *Stage* e *Unstage*.
-- [ ] Criar o detector e os botões virtuais de resolução de conflitos de merge.
+- [x] Criar o detector e os botões virtuais de resolução de conflitos de merge.

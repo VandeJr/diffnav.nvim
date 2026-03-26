@@ -16,3 +16,16 @@ end, {})
 vim.api.nvim_create_user_command("DiffnavUnstage", function()
     require("diffnav.stage").unstage_hunk_at_cursor()
 end, {})
+
+-- Comandos para Resolução de Merges
+vim.api.nvim_create_user_command("DiffnavMergeCurrent", function()
+    require("diffnav.merge").resolve_current()
+end, {})
+
+vim.api.nvim_create_user_command("DiffnavMergeIncoming", function()
+    require("diffnav.merge").resolve_incoming()
+end, {})
+
+vim.api.nvim_create_user_command("DiffnavMergeBoth", function()
+    require("diffnav.merge").resolve_both()
+end, {})
