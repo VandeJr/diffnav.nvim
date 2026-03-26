@@ -1,8 +1,11 @@
 local M = {}
 
-function M.create_float_win(title)
-    local width = math.floor(vim.o.columns * 0.6)
-    local height = math.floor(vim.o.lines * 0.6)
+function M.create_float_win(title, width_ratio, height_ratio)
+    width_ratio = width_ratio or 0.6
+    height_ratio = height_ratio or 0.6
+
+    local width = math.floor(vim.o.columns * width_ratio)
+    local height = math.floor(vim.o.lines * height_ratio)
 
     local row = math.floor((vim.o.lines - height) / 2)
     local col = math.floor((vim.o.columns - width) / 2)
