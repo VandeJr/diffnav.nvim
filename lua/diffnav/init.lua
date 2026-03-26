@@ -42,7 +42,7 @@ function M.show_diff()
         return
     end
 
-    git.get_diff(filepath, function(hunks)
+    git.get_diff(filepath, false, function(hunks)
         if not hunks or #hunks == 0 then
             render.clear(bufnr)
             print("Diffnav: Nenhuma alteração detectada no git ou arquivo não rastreado.")
